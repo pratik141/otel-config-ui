@@ -42,7 +42,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
-
     // Handle tab switching, adding, and deleting subsections
     document.querySelectorAll(".tabs-container").forEach((container) => {
         const tabs = container.querySelector(".tabs");
@@ -143,7 +142,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Save changes
     saveButton.addEventListener("click", async () => {
         const sections = {};
-        document.querySelectorAll(".config-content").forEach((textarea) => {
+        let error = false;
+        const textareas = document.querySelectorAll(".config-content");
+
+        for (const textarea of textareas) {
             const section = textarea.dataset.section;
             const subsection = textarea.dataset.subsection;
 
@@ -152,10 +154,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 sections[section][subsection] = JSON.parse(textarea.value); // Validate and parse JSON
             } catch (e) {
                 alert(`Invalid JSON in ${section} > ${subsection}`);
-                return;
+                error = true;
+                break; // break for loop
             }
-        });
+        }
 
+        if (error) return;
         // Send updated data to the server
         const response = await fetch("/save", {
             method: "POST",
@@ -169,4 +173,69 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("Failed to save configuration.");
         }
     });
+});
+
+document.getElementById("cancel-button").addEventListener("click", () => {
+    location.reload();
+});
+
+// save configuration as yaml file after validation of current configuration from ui
+document.getElementById("download-button").addEventListener("click", async () => {
+    const sections = {};
+    let error = false;
+    let aa = "";
+    JSONToYAML = async (json) => {
+        // let yaml = "";
+        // for (const section in json) {
+        //     yaml += `${section}:\n`;
+        //     for (const subsection in json[section]) {
+        //         yaml += `  ${subsection}:\n`;
+        //         const subsectionContent = json[section][subsection];
+        //         for (const key in subsectionContent) {
+        //             yaml += `    ${key}: ${subsectionContent[key]}\n`;
+        //         }
+        //     }
+        // }
+        // return yaml;
+        //  call api to convert json to yaml
+        const response = await fetch("/convert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(json),
+        });
+        
+        if (response.ok) {
+            return await response.text();
+        } else {
+            alert("Failed to convert configuration to yaml.");
+            return "";
+        }
+    }
+    const textareas = document.querySelectorAll(".config-content");
+
+    for (const textarea of textareas) {
+        const section = textarea.dataset.section;
+        const subsection = textarea.dataset.subsection;
+
+        if (!sections[section]) sections[section] = {};
+        try {
+            sections[section][subsection] = JSON.parse(textarea.value); // Validate and parse JSON
+        } catch (e) {
+            alert(`Invalid JSON in ${section} > ${subsection}`);
+            error = true;
+            break; // break for loop
+        }
+    }
+
+    if (error) return;
+    yaml = await JSONToYAML(sections);
+    const blob = new Blob([yaml], { type: "text/yaml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "configuration.yaml";
+    console.log(url);
+    a.click();
+    URL.revokeObjectURL(url);
+   
 });

@@ -77,6 +77,19 @@ def save_config():
         return "Error saving configuration", 500
     return redirect(url_for("index"))
 
+@app.route("/convert", methods=["POST"])
+def convert_to_yaml():
+    try:
+        json_config = request.json
+        yaml_config = yaml.dump(json_config)
+        return yaml_config
+    except yaml.YAMLError as e:
+        flash(f"Invalid JSON configuration: {e}", "error")
+        return "Invalid JSON configuration", 400
+    except Exception as e:
+        flash(f"Error converting configuration: {e}", "error")
+        return "Error converting configuration", 500
+    
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
