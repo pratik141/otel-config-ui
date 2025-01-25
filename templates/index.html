@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage OpenTelemetry Config</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>OpenTelemetry Collector Configuration</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="messages">
+                {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% endwith %}
+
+        <div id="sections">
+            {% for section, content in config.items() %}
+            <div class="section">
+                <h2>{{ section }}</h2>
+                <div class="tabs-container" id="{{ section }}-tabs">
+                    <div class="tabs">
+                        {% for subsection, subcontent in content.items() %}
+                        <button class="tab-button" data-section="{{ section }}" data-subsection="{{ subsection }}">
+                            {{ subsection }}
+                        </button>
+                        {% endfor %}
+                        <button class="tab-button add-tab" data-section="{{ section }}">+ Add New</button>
+                    </div>
+                    <div class="tab-contents">
+                        {% for subsection, subcontent in content.items() %}
+                        <textarea class="config-content" 
+                                  data-section="{{ section }}" 
+                                  data-subsection="{{ subsection }}">{{ subcontent | tojson(indent=4) }}</textarea>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <button id="save-button">Save Changes</button>
+        <a href="/logout">Logout</a>
+    </div>
+
+    <script src="/static/scripts.js"></script>
+</body>
+</html>
